@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+ 
+
+  <meta charset="UTF-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Enhanced Document Editor</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+  <!-- html2canvas MUST come first -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+<!-- then jsPDF UMD build -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+
+  <style>
+    body {
+      font-family: 'Roboto', sans-serif;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(to right, #0699ca, #0dadd9);
+      color: #f6f7f8;
+    }
+
+    .header {
+      text-align: center;
+      padding: 25px;
+      font-size: 32px;
+      font-weight: bold;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: #fff;
+      background: linear-gradient(to right, #003e58, #005363);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+      text-shadow: 0 0 10px #4fc3f7, 0 0 20px #4fc3f7;
+    }
+
+    .editor-container {
+      max-width: 1000px;
+      margin: 40px auto;
+      padding: 30px;
+      background: #ffffff;
+      border-radius: 20px;
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4), 0 0 30px #4fc3f7;
+    }
+
+    .toolbar {
+      display: flex;
+      justify-content: space-around;
+      flex-wrap: wrap;
+      gap: 10px;
+      background: linear-gradient(to right, #243b55, #141e30);
+      padding: 15px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    .toolbar button, .toolbar select, .toolbar input {
+      background: #000608;
+      border: none;
+      color: #fff;
+      padding: 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 16px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3), 0 0 10px #4fc3f7;
+      transition: transform 0.2s ease, box-shadow 0.3s ease;
+    }
+
+    .toolbar button:hover {
+      transform: scale(1.1);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5), 0 0 20px #4fc3f7;
+    }
+
+    #editor {
+      margin-top: 20px;
+      padding: 20px;
+      height: 400px;
+      border: 2px solid #ccc;
+      border-radius: 15px;
+      overflow-y: auto;
+      background: #f9faff;
+      font-size: 18px;
+      line-height: 1.8;
+      color: #333;
+      transition: box-shadow 0.3s ease;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    #editor:hover {
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3), 0 0 15px #4fc3f7;
+    }
+
+    #editor:focus {
+      outline: none;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5), 0 0 20px #4fc3f7;
+    }
+
+    .ai-container {
+      margin-top: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .ai-input {
+      flex-grow: 1;
+      padding: 12px;
+      font-size: 16px;
+      border: 2px solid #ccc;
+      border-radius: 10px;
+      outline: none;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    .ai-input:focus {
+      border-color: #4fc3f7;
+      box-shadow: 0 6px 15px rgba(0, 0, 0, 0.4), 0 0 10px #4fc3f7;
+    }
+
+    .ai-button {
+      background: linear-gradient(to right, #0078d7, #005f99);
+      color: #fff;
+      border: none;
+      padding: 12px 20px;
+      font-size: 16px;
+      border-radius: 10px;
+      cursor: pointer;
+      animation: glowing 1.5s infinite;
+      box-shadow: 0 0 10px #4fc3f7;
+    }
+
+    .ai-button:hover {
+      box-shadow: 0 0 20px #4fc3f7, 0 0 40px #0078d7;
+    }
+
+    @keyframes glowing {
+      0% { box-shadow: 0 0 10px #0078d7; }
+      50% { box-shadow: 0 0 20px #4fc3f7; }
+      100% { box-shadow: 0 0 10px #0078d7; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">Document Editor</div>
+
+<div class="editor-container">
+  <div class="toolbar">
+    <button onclick="document.execCommand('bold', false, '')">Bold</button>
+    <button onclick="document.execCommand('italic', false, '')">Italic</button>
+    <button onclick="document.execCommand('underline', false, '')">Underline</button>
+    <button onclick="document.execCommand('justifyLeft', false, '')">Left</button>
+    <button onclick="document.execCommand('justifyCenter', false, '')">Center</button>
+    <button onclick="document.execCommand('justifyRight', false, '')">Right</button>
+    <select onchange="document.execCommand('fontSize', false, this.value)">
+      <option value="1">Small</option>
+      <option value="3" selected>Normal</option>
+      <option value="5">Large</option>
+    </select>
+    <input type="color" onchange="document.execCommand('foreColor', false, this.value)" title="Text Color">
+    <input type="color" onchange="document.getElementById('editor').style.backgroundColor = this.value" title="Background Color">
+    <button onclick="saveAsPDF()">Save as PDF</button>
+  </div>
+
+  <div id="editor" contenteditable="true" placeholder="Start editing your document here..."></div>
+
+  <div class="ai-container">
+    <input type="text" id="ai-input" class="ai-input" placeholder="Enter a prompt for AI content generation...">
+    <button class="ai-button" onclick="generateAIContent()">Generate AI Content</button>
+  </div>
+</div>
+<script>
+/*  If the page is served by Flask, keep it relative.
+    If you insist on opening the file directly via file://
+    leave the full URL *and* enable CORS in Flask.           */
+const PROXY_URL = "/api/generate";       // same origin
+
+function saveAsPDF() {
+  const editor = document.getElementById("editor");
+  const raw    = editor.innerText.replace(/\r\n/g, "\n").trim();
+
+  if (!raw) {
+    alert("There’s no finished content to save yet.");
+    return;
+  }
+
+  const { jsPDF } = window.jspdf;
+  const pdf       = new jsPDF({ unit: "mm", format: "a4" });
+  pdf.setFontSize(14);
+
+  const M_LEFT = 20;
+  const M_TOP  = 25;
+  const LINE_H = 6;              /* ← tighter line spacing (was 8) */
+  const PAGE_W = 210;
+  const PAGE_H = 297;
+  const WRAP_W = PAGE_W - M_LEFT * 2;
+
+  const paragraphs = raw.split("\n");
+  let y = M_TOP;
+
+  paragraphs.forEach(para => {
+    const lines = pdf.splitTextToSize(para.trim(), WRAP_W);
+
+    lines.forEach(line => {
+      if (y > PAGE_H - M_TOP) {
+        pdf.addPage();
+        y = M_TOP;
+      }
+      pdf.text(line, M_LEFT, y);
+      y += LINE_H;
+    });
+  });
+
+  const firstFive = raw.split(/\s+/).slice(0, 5).join("_");
+  const filename  = (firstFive || "letter").replace(/[^\w-]/g, "_") + ".pdf";
+
+  pdf.save(filename);
+}
+
+async function generateAIContent() {
+  const editor = document.getElementById("editor");
+  const prompt = document.getElementById("ai-input").value.trim();
+
+  if (!prompt) {
+    alert("Please enter a prompt before generating content!");
+    return;
+  }
+
+  editor.innerHTML = "<p>Generating content… Please wait!</p>";
+
+  try {
+    const res = await fetch(PROXY_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt })
+    });
+    const data = await res.json();
+
+    if (res.ok && data.text) {
+      editor.innerHTML = `<p>${data.text.replace(/\n/g, "<br>")}</p>`;
+    } else {
+      editor.innerHTML =
+        `<p style="color:red;">${data.error || "Failed to generate content."}</p>`;
+    }
+  } catch (err) {
+    editor.innerHTML = `<p style="color:red;">Error: ${err.message}</p>`;
+  }
+}
+</script>
+<!-- html2pdf.js bundle: includes html2canvas + jsPDF 2.4 -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+
+</body>
+</html>
